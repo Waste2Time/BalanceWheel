@@ -1,46 +1,48 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
-from typing import Optional
+import random
+from datetime import datetime, timedelta
 
-import numpy as np
-import pandas as pd
-
-from .base import DataSource, ensure_ohlcv_columns
+from .base import IDataSource
+from .models import Bar, DataSet
 
 
-class SyntheticSource(DataSource):
-    """Generate random-walk OHLCV data for offline experimentation."""
+class SyntheticSource(IDataSource):
+    """离线随机游走数据源，便于快速跑通流程。"""
 
-    def __init__(self, seed: Optional[int] = None, start_price: float = 100.0):
-        self.seed = seed
-        self.start_price = start_price
+    def __init__(self, seed: int | None = 42, start_price: float = 100.0) -> None:
+        self._rng = random.Random(seed)
+        self._start_price = start_price
 
-    def fetch(
-        self, symbol: str, start: Optional[date] = None, end: Optional[date] = None
-    ) -> pd.DataFrame:
-        rng = np.random.default_rng(self.seed)
-        start_dt = datetime.combine(start or date(2020, 1, 1), datetime.min.time())
-        end_dt = datetime.combine(end or date.today(), datetime.min.time())
-        days = (end_dt - start_dt).days + 1
-        dates = [start_dt + timedelta(days=i) for i in range(days)]
-        returns = rng.normal(loc=0.0005, scale=0.01, size=days)
-        prices = [self.start_price]
-        for r in returns[1:]:
-            prices.append(prices[-1] * (1 + r))
-        prices = np.array(prices)
-        highs = prices * (1 + rng.normal(0.002, 0.002, size=days))
-        lows = prices * (1 - rng.normal(0.002, 0.002, size=days))
-        volumes = rng.integers(low=1_000, high=10_000, size=days)
-        df = pd.DataFrame(
-            {
-                "open": prices,
-                "high": highs,
-                "low": lows,
-                "close": prices,
-                "volume": volumes,
-            },
-            index=pd.to_datetime(dates),
-        )
-        df.index.name = "date"
-        return ensure_ohlcv_columns(df)
+    def fetch(self, symbol: str, start: datetime, end: datetime, frequency: str) -> DataSet:
+        if frequency != "1d":
+            raise ValueError(f"SyntheticSource 目前仅支持日线 frequency='1d'，收到: {frequency}")
+
+        if start > end:
+            raise ValueError("start 时间必须早于 end 时间")
+
+        bars: list[Bar] = []
+        price = self._start_price
+        current = start
+        while current <= end:
+            drift = self._rng.gauss(0, 0.02)
+            price = max(price * (1 + drift), 0.1)
+            high = price * (1 + abs(self._rng.gauss(0, 0.005)))
+            low = price * (1 - abs(self._rng.gauss(0, 0.005)))
+            close = price
+            open_price = (high + low) / 2
+            volume = abs(self._rng.gauss(1_000_000, 250_000))
+            bars.append(
+                Bar(
+                    symbol=symbol,
+                    datetime=current,
+                    open=open_price,
+                    high=max(high, low),
+                    low=min(high, low),
+                    close=close,
+                    volume=volume,
+                )
+            )
+            current += timedelta(days=1)
+
+        return DataSet.from_iterable(symbol=symbol, frequency=frequency, bars=bars)

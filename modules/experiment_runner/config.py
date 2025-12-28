@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date
-from typing import Dict, List
-
-from modules.strategies.base import Strategy
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExperimentConfig:
+    name: str
     symbol: str
-    start: date
-    end: date
-    strategies: List[Strategy] = field(default_factory=list)
-    engine_config: Dict[str, object] = field(default_factory=dict)
+    start: datetime
+    end: datetime
+    frequency: str
+    engine_config: Any

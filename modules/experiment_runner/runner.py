@@ -1,23 +1,25 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from dataclasses import dataclass
 
-import pandas as pd
-
-from modules.backtest_engine.simple_engine import SimpleBacktestEngine
+from modules.backtest_engine.base import IBacktestEngine
 from modules.backtest_engine.result import BacktestResult
-from modules.strategies.base import Strategy
+
+from .config import ExperimentConfig
+
+
+@dataclass(frozen=True)
+class ExperimentResult:
+    name: str
+    results: dict[str, BacktestResult]
 
 
 class ExperimentRunner:
-    def __init__(self):
-        self.engine = SimpleBacktestEngine()
+    def __init__(self, engine: IBacktestEngine) -> None:
+        self._engine = engine
 
-    def run_strategies(
-        self, data: pd.DataFrame, strategies: List[Strategy], engine_config: Dict[str, object]
-    ) -> Dict[str, BacktestResult]:
-        results: Dict[str, BacktestResult] = {}
-        for strategy in strategies:
-            result = self.engine.run(strategy=strategy, data=data, config=engine_config)
-            results[strategy.name] = result
-        return results
+    def run(self, config: ExperimentConfig, dataset, strategies: dict[str, object]) -> ExperimentResult:
+        results: dict[str, BacktestResult] = {}
+        for name, strategy in strategies.items():
+            results[name] = self._engine.run(strategy, dataset, config.engine_config)
+        return ExperimentResult(name=config.name, results=results)
