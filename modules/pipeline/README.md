@@ -1,31 +1,15 @@
 # 流程编排模块（pipeline）
 
-## 目标
+## 已完成
+- 定义 `PipelineConfig` 与端到端管线入口（缺失 CSV 时可调用数据源生成数据、验证并缓存）。
+- 支持基线与变体策略通过 ExperimentRunner 运行并调用报告模块输出结果。
 
-- 串联数据源、回测引擎、策略、风控、对比与报告。
-- 提供端到端的运行入口。
+## 必须完成但未完成
+- 使用真实数据源的自动拉取/缓存、数据版本记录与更细致的验证报告。
+- CLI/配置文件驱动的参数化入口，支持多标的批处理。
+- 错误处理与运行日志记录。
 
-## 入口设计
-
-- CLI 或配置驱动（YAML/JSON）。
-- 统一传入标的池、时间区间与回测参数。
-
-## 端到端流程伪代码
-
-```
-config = load_config("config.yml")
-raw_data = data_source.fetch(config.symbol, config.start, config.end)
-clean = validate_and_cache(raw_data)
-result = backtest_engine.run(strategy, clean, config)
-reporting.render(result)
-```
-
-## 最小可行示例
-
-- 单标的策略 + 结果图输出。
-- 基线与改动策略对比输出。
-
-## 扩展方向
-
-- 插件式新增数据源与引擎。
-- 多市场/多资产统一回测接口。
+## 可选项
+- 任务队列或调度器集成以批量实验。
+- 与 notebook/可视化界面联动的一键跑批。
+- 更丰富的产出目录结构（对比报告、图片、指标表）。

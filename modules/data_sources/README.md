@@ -1,58 +1,17 @@
 # 数据源模块（data_sources）
 
-## 目标
+## 已完成
+- 统一数据模型（Bar/DataSet）与 `IDataSource` 抽象接口。
+- CSV 缓存读写工具，固定字段与时间格式。
+- 基础验证函数：数据对齐差异度量（`validate_pair`）与时间序列有序性检查。
+- 离线可用的 `SyntheticSource`（随机游走）用于生成示例数据集。
 
-- 以统一接口接入多数据源（初期 baostock + akshare）。
-- 对同一标的、同一时间区间进行交叉验证，提升数据可信度。
-- 清洗后的数据落地为 CSV，支持可复现与增量更新。
+## 必须完成但未完成
+- 接入真实数据源（baostock、akshare）并实现字段映射与频率转换。
+- 增量更新与缓存元数据记录（数据版本、时间戳、hash）。
+- 更严格的质量控制：缺失值/重复值修复、停牌处理、复权因子对齐。
 
-## 接口设计
-
-建议定义统一数据源接口：
-
-```
-class IDataSource:
-    def fetch(self, symbol: str, start: datetime, end: datetime, frequency: str) -> DataSet:
-        """返回统一字段的行情数据"""
-```
-
-### 统一字段规范
-
-建议字段：
-
-- `datetime`（ISO8601 或时间戳）
-- `open`, `high`, `low`, `close`, `volume`
-
-## 数据清洗与校验
-
-1. **字段对齐**：强制标准字段，保留原始字段映射表。
-2. **缺失处理**：缺失行删除或前向填充（视策略要求）。
-3. **去重与排序**：按时间排序、移除重复时间戳。
-4. **交叉验证**：同窗口的 `close` 差异统计。
-
-## CSV 落地策略
-
-- 路径规范：`data/<source>/<symbol>/<frequency>.csv`
-- 命名规范：`YYYYMMDD_YYYYMMDD.csv`（可选）
-- 增量更新：按最后时间戳进行追加写入
-- 版本记录：记录数据源版本与更新时间戳（metadata 文件或 header）
-
-## 交叉验证流程
-
-1. 分别从 baostock 与 akshare 拉取同一标的同一时间区间。
-2. 规范化字段与时间索引。
-3. 计算差异指标（绝对差、相对差、缺失比例）。
-4. 将验证结果保存为 `validation_report.json` 或 CSV。
-
-## 扩展点
-
-- 预留 tushare、聚宽等数据源适配器。
-- 支持期货、外汇、ETF、贵金属等标的类别。
-
-## 示例伪代码
-
-```
-source = BaostockSource(fetcher=...)
-raw = source.fetch("600000.SH", start, end, "1d")
-write_csv("data/baostock/600000.SH/1d.csv", raw)
-```
+## 可选项
+- 追加更多数据源（tushare、聚宽等）与资产类型（期货、外汇、贵金属）。
+- 自动化交叉验证报告导出（CSV/JSON），并提供可视化对比。
+- 数据预处理缓存（如信号特征列预生成）与分布式拉取。

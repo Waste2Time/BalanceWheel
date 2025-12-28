@@ -14,6 +14,13 @@ class ValidationReport:
     close_diff_max: float
 
 
+@dataclass(frozen=True)
+class OrderingValidation:
+    symbol: str
+    is_sorted: bool
+    has_duplicates: bool
+
+
 def _close_diffs(left: Iterable[Bar], right: Iterable[Bar]) -> list[float]:
     right_map = {bar.datetime: bar.close for bar in right}
     diffs: list[float] = []
@@ -37,4 +44,17 @@ def validate_pair(primary: DataSet, secondary: DataSet) -> ValidationReport:
         missing_ratio=missing_ratio,
         close_diff_mean=close_diff_mean,
         close_diff_max=close_diff_max,
+    )
+
+
+def validate_ordering(dataset: DataSet) -> OrderingValidation:
+    """检查时间序列是否有序且无重复时间戳。"""
+
+    timestamps = [bar.datetime for bar in dataset.bars]
+    is_sorted = all(earlier <= later for earlier, later in zip(timestamps, timestamps[1:]))
+    has_duplicates = len(timestamps) != len(set(timestamps))
+    return OrderingValidation(
+        symbol=dataset.symbol,
+        is_sorted=is_sorted,
+        has_duplicates=has_duplicates,
     )
