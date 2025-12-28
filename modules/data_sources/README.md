@@ -12,7 +12,7 @@
 
 ```
 class IDataSource:
-    def fetch(self, symbol: str, start: str, end: str, frequency: str) -> DataFrame:
+    def fetch(self, symbol: str, start: datetime, end: datetime, frequency: str) -> DataSet:
         """返回统一字段的行情数据"""
 ```
 
@@ -20,17 +20,15 @@ class IDataSource:
 
 建议字段：
 
-- `datetime`（ISO8601 或 pandas 时间戳）
+- `datetime`（ISO8601 或时间戳）
 - `open`, `high`, `low`, `close`, `volume`
-- `turnover`（如有）
-- `adj_factor`（复权因子，如有）
 
 ## 数据清洗与校验
 
 1. **字段对齐**：强制标准字段，保留原始字段映射表。
 2. **缺失处理**：缺失行删除或前向填充（视策略要求）。
 3. **去重与排序**：按时间排序、移除重复时间戳。
-4. **交叉验证**：同窗口的 `close/volume/adj_factor` 差异统计。
+4. **交叉验证**：同窗口的 `close` 差异统计。
 
 ## CSV 落地策略
 
@@ -54,8 +52,7 @@ class IDataSource:
 ## 示例伪代码
 
 ```
-source = BaostockSource()
-raw = source.fetch("600000.SH", "2019-01-01", "2020-01-01", "1d")
-normalized = normalize_fields(raw)
-write_csv("data/baostock/600000.SH/1d.csv", normalized)
+source = BaostockSource(fetcher=...)
+raw = source.fetch("600000.SH", start, end, "1d")
+write_csv("data/baostock/600000.SH/1d.csv", raw)
 ```
