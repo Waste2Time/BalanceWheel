@@ -24,7 +24,7 @@ flowchart TD
 
     subgraph BacktestEngineAdapter
         E1[vn.py]
-        E2[其他引擎(预留)]
+        E2[其他引擎]
     end
 ```
 
