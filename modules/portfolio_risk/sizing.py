@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
 
 
-@dataclass(frozen=True)
-class PositionSizer:
-    max_position: float = 1.0
-
-    def size(self, target_position: float) -> float:
-        return max(min(target_position, self.max_position), -self.max_position)
+def fixed_fractional_size(capital: float, price: float, fraction: float, min_qty: int = 1) -> int:
+    risk_capital = capital * fraction
+    qty = math.floor(risk_capital / price)
+    return max(qty, min_qty)

@@ -1,4 +1,4 @@
-from .risk import RiskLimits, check_drawdown
-from .sizing import PositionSizer
+from .risk import compute_metrics, max_drawdown
+from .sizing import fixed_fractional_size
 
-__all__ = ["RiskLimits", "check_drawdown", "PositionSizer"]
+__all__ = ["compute_metrics", "max_drawdown", "fixed_fractional_size"]

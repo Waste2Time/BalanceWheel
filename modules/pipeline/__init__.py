@@ -1,3 +1,3 @@
-from .run import PipelineConfig, run_pipeline
+from .run import run_pipeline, prepare_data
 
-__all__ = ["PipelineConfig", "run_pipeline"]
+__all__ = ["run_pipeline", "prepare_data"]

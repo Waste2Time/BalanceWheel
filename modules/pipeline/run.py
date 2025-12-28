@@ -1,98 +1,65 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 from pathlib import Path
-import json
-from typing import Callable
 
-from modules.backtest_engine.simple_engine import BacktestConfig, SimpleBacktestEngine
+import pandas as pd
+
 from modules.data_sources import (
-    AkshareSource,
-    BaostockSource,
     CacheMetadata,
-    load_csv,
-    random_walk_fetcher,
-    save_csv,
-    validate_pair,
+    SyntheticSource,
+    build_cache_path,
+    load_cache,
+    save_cache,
+    validate_ohlcv,
 )
-from modules.experiment_runner import ExperimentConfig, ExperimentRunner
-from modules.reporting_ui import build_report
-from modules.strategies import MovingAverageCrossStrategy
+from modules.experiment_runner import ExperimentRunner
+from modules.reporting_ui import build_report, plot_equity_curves, save_report
+from modules.strategies import MovingAverageCross
 
 
-@dataclass(frozen=True)
-class PipelineConfig:
-    symbol: str
-    frequency: str
-    csv_path: Path
-    output_dir: Path
-    start: datetime
-    end: datetime
-    primary_fetcher: Callable | None = None
-    secondary_fetcher: Callable | None = None
-    use_synthetic_on_missing: bool = True
-    commission_rate: float = 0.0
-    initial_capital: float = 1_000_000.0
+def prepare_data(symbol: str, start: date, end: date) -> pd.DataFrame:
+    cache_path = build_cache_path(symbol, start, end)
+    cached = load_cache(cache_path)
+    if cached is not None:
+        cached.index = pd.to_datetime(cached.index)
+        return cached
 
-
-def run_pipeline(config: PipelineConfig) -> None:
-    dataset = _load_or_fetch_dataset(config)
-    engine = SimpleBacktestEngine()
-    baseline = MovingAverageCrossStrategy()
-    variant = MovingAverageCrossStrategy(short_window=10, long_window=30, position_size=2.0)
-    exp_config = ExperimentConfig(
-        name="baseline",
-        symbol=config.symbol,
-        start=config.start,
-        end=config.end,
-        frequency=config.frequency,
-        engine_config=BacktestConfig(
-            initial_capital=config.initial_capital,
-            commission_rate=config.commission_rate,
-        ),
-        output_dir=config.output_dir,
+    source = SyntheticSource(seed=42)
+    df = source.fetch(symbol, start=start, end=end)
+    validated = validate_ohlcv(df)
+    clean_df = validated["data"]
+    save_cache(
+        clean_df,
+        cache_path,
+        CacheMetadata(symbol=symbol, start=start.isoformat(), end=end.isoformat(), source="SyntheticSource"),
     )
-    runner = ExperimentRunner(engine)
-    result = runner.run(exp_config, dataset, {"baseline": baseline, "variant": variant})
-    for name, backtest_result in result.results.items():
-        build_report(backtest_result, config.output_dir / name)
+    return clean_df
 
 
-def _load_or_fetch_dataset(config: PipelineConfig):
-    if config.csv_path.exists():
-        return load_csv(config.csv_path, config.symbol, config.frequency)
+def run_pipeline(
+    symbol: str = "SYNTH",
+    start: date = date(2022, 1, 1),
+    end: date = date(2022, 12, 31),
+    report_dir: Path = Path("data/reports"),
+):
+    data = prepare_data(symbol, start, end)
 
-    fetcher = config.primary_fetcher
-    if fetcher is None and config.use_synthetic_on_missing:
-        fetcher = random_walk_fetcher()
-    if fetcher is None:
-        raise FileNotFoundError(f"CSV not found and no fetcher provided: {config.csv_path}")
+    baseline = MovingAverageCross(fast=10, slow=30)
+    variant = MovingAverageCross(fast=5, slow=20)
 
-    primary = BaostockSource(fetcher)
-    dataset = primary.fetch(config.symbol, config.start, config.end, config.frequency)
+    runner = ExperimentRunner()
+    results = runner.run_strategies(data, [baseline, variant], engine_config={"position_fraction": 0.3})
 
-    validation_report = None
-    if config.secondary_fetcher:
-        secondary = AkshareSource(config.secondary_fetcher)
-        secondary_dataset = secondary.fetch(config.symbol, config.start, config.end, config.frequency)
-        validation_report = validate_pair(dataset, secondary_dataset)
-        _write_validation(config.csv_path.parent / "validation.json", validation_report)
+    report_text = build_report(results)
+    report_path = report_dir / "report.txt"
+    save_report(report_text, report_path)
 
-    metadata = CacheMetadata(
-        source="baostock",
-        symbol=config.symbol,
-        frequency=config.frequency,
-        start=config.start.isoformat(),
-        end=config.end.isoformat(),
-        updated_at=datetime.utcnow().isoformat(),
-    )
-    save_csv(config.csv_path, dataset, metadata=metadata)
-    return dataset
+    equity_curves = {name: res.equity_curve for name, res in results.items()}
+    plot_equity_curves(equity_curves, report_dir / "equity.png")
+
+    return {"data": data, "results": results, "report_path": report_path}
 
 
-def _write_validation(path: Path, report) -> None:
-    if report is None:
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+if __name__ == "__main__":
+    run_pipeline()

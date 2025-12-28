@@ -1,60 +1,27 @@
 from __future__ import annotations
 
-import importlib.util
-from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, Optional
 
-from modules.backtest_engine.result import BacktestResult
+import pandas as pd
+
+try:
+    import matplotlib.pyplot as plt
+except Exception:  # pragma: no cover
+    plt = None
 
 
-@dataclass(frozen=True)
-class ChartPaths:
-    equity_curve: Path | None
-    drawdown_curve: Path | None = None
-
-
-def render_equity_curve(result: BacktestResult, output_dir: Path) -> ChartPaths:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    timestamps = [point.datetime for point in result.equity_curve]
-    equities = [point.equity for point in result.equity_curve]
-
-    plt = _require_matplotlib(optional=True)
+def plot_equity_curves(results: Dict[str, pd.Series], output: Path) -> Optional[Path]:
     if plt is None:
-        return ChartPaths(equity_curve=None, drawdown_curve=None)
-
-    fig, ax = plt.subplots()
-    ax.plot(timestamps, equities, label="Equity")
-    ax.set_title("Equity Curve")
-    ax.legend()
-    path = output_dir / "equity_curve.png"
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    drawdown_path = _render_drawdown(timestamps, equities, output_dir, plt)
-    return ChartPaths(equity_curve=path, drawdown_curve=drawdown_path)
-
-
-def _render_drawdown(timestamps, equities, output_dir: Path, plt) -> Path:
-    peak = equities[0] if equities else 0.0
-    drawdowns = []
-    for eq in equities:
-        peak = max(peak, eq)
-        drawdowns.append((eq - peak) / peak if peak else 0.0)
-
-    fig, ax = plt.subplots()
-    ax.plot(timestamps, drawdowns, label="Drawdown", color="red")
-    ax.set_title("Drawdown")
-    ax.legend()
-    path = output_dir / "drawdown.png"
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    return path
-
-
-def _require_matplotlib(optional: bool = False):
-    if importlib.util.find_spec("matplotlib") is None:
-        if optional:
-            return None
-        raise RuntimeError("matplotlib 未安装，无法生成图表。请先安装 matplotlib。")
-    import matplotlib.pyplot as plt  # type: ignore
-
-    return plt
+        return None
+    output.parent.mkdir(parents=True, exist_ok=True)
+    for name, series in results.items():
+        series.sort_index().plot(label=name)
+    plt.legend()
+    plt.title("Equity Curve Comparison")
+    plt.xlabel("Date")
+    plt.ylabel("Equity")
+    plt.tight_layout()
+    plt.savefig(output)
+    plt.close()
+    return output

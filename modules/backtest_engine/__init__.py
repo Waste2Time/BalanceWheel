@@ -1,14 +1,5 @@
-from .base import IBacktestEngine
-from .result import BacktestResult, EquityPoint, Trade
-from .simple_engine import BacktestConfig, SimpleBacktestEngine
-from .vnpy_adapter import VnpyBacktestEngine
+from .base import BacktestEngine
+from .result import BacktestResult, Trade
+from .simple_engine import SimpleBacktestEngine
 
-__all__ = [
-    "IBacktestEngine",
-    "BacktestResult",
-    "EquityPoint",
-    "Trade",
-    "BacktestConfig",
-    "SimpleBacktestEngine",
-    "VnpyBacktestEngine",
-]
+__all__ = ["BacktestEngine", "BacktestResult", "Trade", "SimpleBacktestEngine"]

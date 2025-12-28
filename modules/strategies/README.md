@@ -1,17 +1,16 @@
-# 策略库模块（strategies）
+# 策略库模块
 
 ## 已完成
-- 基础抽象 `Strategy`，统一 `on_bar(bar, history) -> target_position` 接口。
-- 单标的均线交叉策略 `MovingAverageCrossStrategy`，参数化短/长均线窗口与仓位。
-- 轮动信号生成器 `RotationStrategy`，按动量得分排序并截取 Top K。
-- 组合权重模板 `PortfolioStrategy`，支持权重归一化。
+- 策略基类 `Strategy.generate_signals(data)`，约定输出包含 `signal` 列的 `DataFrame`。
+- 示例策略：双均线交叉（快速/慢速），可配置周期与信号平滑窗口。
+- 策略元数据：名称、参数存档，便于在实验管理中记录 baseline/variant。
 
 ## 必须完成但未完成
-- 与风控/仓位模块的对接（position sizing、风险钩子）。
-- 更丰富的策略样例（突破、均值回归、波动率控制的组合策略）。
-- 参数扫描/网格搜索支持，便于 baseline 与 variant 对比。
+- 轮动与组合策略模板（如动量轮动、风险平价权重生成）。
+- 信号与执行解耦：拆分 signal generator、position sizer、execution 模块。
+- 参数搜索/网格调优接口。
 
 ## 可选项
-- 策略元数据与日志埋点，辅助调试与可视化。
-- 事件驱动的交易执行抽象（信号 -> 订单 -> 成交）。
-- 策略回放/模拟实时接口（用于 paper trading）。
+- 事件驱动策略（新闻、宏观事件）示例。
+- 模型驱动策略（机器学习/深度学习）接口预留。
+- 策略表现解释性输出（特征贡献、因子暴露）。

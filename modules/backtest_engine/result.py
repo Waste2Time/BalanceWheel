@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
+import pandas as pd
 
 
-@dataclass(frozen=True)
-class EquityPoint:
-    datetime: datetime
-    equity: float
-
-
-@dataclass(frozen=True)
+@dataclass
 class Trade:
-    datetime: datetime
-    price: float
-    size: float
+    entry_date: pd.Timestamp
+    entry_price: float
+    exit_date: Optional[pd.Timestamp]
+    exit_price: Optional[float]
+    quantity: float
+    pnl: float
 
 
-@dataclass(frozen=True)
+@dataclass
 class BacktestResult:
-    equity_curve: tuple[EquityPoint, ...]
-    trades: tuple[Trade, ...]
-    performance_metrics: dict[str, float]
+    equity_curve: pd.Series
+    metrics: Dict[str, float]
+    trades: List[Trade] = field(default_factory=list)
+    signals: Optional[pd.DataFrame] = None

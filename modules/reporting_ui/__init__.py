@@ -1,4 +1,4 @@
-from .charts import ChartPaths, render_equity_curve
-from .report import ReportBundle, build_report
+from .charts import plot_equity_curves
+from .report import build_report, save_report
 
-__all__ = ["ChartPaths", "render_equity_curve", "ReportBundle", "build_report"]
+__all__ = ["plot_equity_curves", "build_report", "save_report"]

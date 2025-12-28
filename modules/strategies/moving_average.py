@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from modules.data_sources.models import Bar
+import pandas as pd
 
 from .base import Strategy
 
 
-@dataclass(frozen=True)
-class MovingAverageCrossStrategy(Strategy):
-    short_window: int = 5
-    long_window: int = 20
-    position_size: float = 1.0
+class MovingAverageCross(Strategy):
+    def __init__(self, fast: int = 10, slow: int = 30, smooth: int = 1):
+        super().__init__(name="moving_average_cross")
+        self.fast = fast
+        self.slow = slow
+        self.smooth = smooth
 
-    def on_bar(self, bar: Bar, history: list[Bar]) -> float:
-        if len(history) < self.long_window:
-            return 0.0
-        closes = [item.close for item in history]
-        short_ma = sum(closes[-self.short_window :]) / self.short_window
-        long_ma = sum(closes[-self.long_window :]) / self.long_window
-        return self.position_size if short_ma > long_ma else 0.0
+    def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
+        df = data.copy()
+        df["fast_ma"] = df["close"].rolling(self.fast).mean()
+        df["slow_ma"] = df["close"].rolling(self.slow).mean()
+        signal = (df["fast_ma"] > df["slow_ma"]).astype(int) * 2 - 1
+        if self.smooth > 1:
+            signal = signal.rolling(self.smooth).mean().round()
+        df["signal"] = signal
+        return df[["signal"]]
