@@ -56,3 +56,36 @@ modules/
 3. 策略示例：单标的（如均线交叉）与轮动策略。
 4. 多策略对比：baseline + variant 批量回测。
 5. 图表输出：回测结束生成收益曲线/回撤图（PNG）。
+
+## 快速开始（MVP 跑通示例）
+
+1) 安装依赖（可根据需求选择最小集合）：
+
+```bash
+pip install akshare baostock pandas matplotlib
+# 如需使用 vn.py CTA 回测：
+pip install vnpy vnpy_ctastrategy
+```
+
+2) 跑通示例（默认使用本地/自动生成的 CSV + 简易引擎）：
+
+```bash
+python -m modules.pipeline.run --symbol SYNTH --data-source synthetic --engine simple \
+  --csv-path data/synth/SYNTH_1d.csv --output-dir reports/demo
+```
+
+3) 使用真实数据与 vn.py 引擎（示例：baostock 日线，不复权）：
+
+```bash
+python -m modules.pipeline.run --symbol sh.600000 --data-source baostock --engine vnpy \
+  --start 2020-01-01 --end 2020-12-31 \
+  --csv-path data/baostock/sh600000_1d.csv --output-dir reports/baostock_ma
+```
+
+4) 使用 akshare 数据源（等效指令，可改为 akshare 支持的代码格式，如 `000001`）：
+
+```bash
+python -m modules.pipeline.run --symbol 000001 --data-source akshare --engine simple \
+  --start 2020-01-01 --end 2020-12-31 \
+  --csv-path data/akshare/000001_1d.csv --output-dir reports/akshare_ma
+```
