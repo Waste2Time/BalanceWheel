@@ -6,6 +6,7 @@
 - 基础验证函数：数据对齐差异度量（`validate_pair`）与时间序列有序性检查。
 - 离线可用的 `SyntheticSource`（随机游走）用于生成示例数据集。
 - 实现 baostock 与 akshare 适配器，支持日线数据的拉取与字段映射。
+- 新增 `__main__` 入口，支持 `python -m modules.data_sources` 查看示例用法或快捷生成数据。
 
 ## 必须完成但未完成
 - 增量更新与缓存元数据记录（数据版本、时间戳、hash）。

@@ -4,6 +4,7 @@
 - 定义 `PipelineConfig` 与端到端管线入口（缺失 CSV 时可调用数据源生成数据、验证并缓存）。
 - 支持基线与变体策略通过 ExperimentRunner 运行并调用报告模块输出结果。
 - 增加 baostock/akshare/synthetic 数据源选择，以及简单/ vn.py 引擎切换的 CLI 入口。
+- 新增 `__main__` 入口，支持 `python -m modules.pipeline` 直接运行管线。
 
 ## 必须完成但未完成
 - 使用真实数据源的自动增量更新、数据版本记录与更细致的验证报告。

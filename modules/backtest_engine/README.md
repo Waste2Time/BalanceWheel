@@ -5,6 +5,7 @@
 - 提供轻量 `SimpleBacktestEngine`，支持初始资金与手续费参数。
 - 计算基本绩效指标：总收益率与最大回撤。
 - 接入 vn.py CTA 回测引擎，提供委托策略包装器，将自定义 `Strategy` 映射到 vn.py 的 `CtaTemplate`。
+- 新增 `__main__` 入口，支持 `python -m modules.backtest_engine` 获取模块用法提示。
 
 ## 必须完成但未完成
 - 支持滑点、复合费用、保证金/合约乘数、分红送股处理。
