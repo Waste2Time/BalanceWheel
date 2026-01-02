@@ -2,8 +2,9 @@
 
 ## 已完成
 - 定义 `PipelineConfig` 与端到端管线入口（缺失 CSV 时可调用数据源生成数据、验证并缓存）。
-- 支持基线与变体策略通过 ExperimentRunner 运行并调用报告模块输出结果。
+- 支持基线与变体策略通过 ExperimentRunner 运行并调用报告模块输出结果，含指标表、显著性检验与多策略叠加图。
 - 增加 baostock/akshare/synthetic 数据源选择，以及简单/ vn.py 引擎切换的 CLI 入口。
+- 支持预设 `ma_demo`（均线交叉）与 `afternoon_etf`（创业板/纳指 近一月涨幅择时）两套流程，支持 JSON/YAML 策略配置文件。
 - 新增 `__main__` 入口，支持 `python -m modules.pipeline` 直接运行管线。
 
 ## 必须完成但未完成

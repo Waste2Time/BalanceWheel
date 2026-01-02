@@ -6,6 +6,7 @@ from typing import Iterable
 from modules.data_sources.models import Bar, DataSet
 
 from .base import IBacktestEngine
+from .metrics import compute_performance
 from .result import BacktestResult, EquityPoint, Trade
 
 
@@ -38,25 +39,10 @@ class SimpleBacktestEngine(IBacktestEngine):
             equity = cash + position * bar.close
             equity_curve.append(EquityPoint(datetime=bar.datetime, equity=equity))
 
-        performance = _calculate_performance(equity_curve)
+        performance, returns = compute_performance(equity_curve)
         return BacktestResult(
             equity_curve=tuple(equity_curve),
             trades=tuple(trades),
             performance_metrics=performance,
+            daily_returns=returns,
         )
-
-
-def _calculate_performance(equity_curve: Iterable[EquityPoint]) -> dict[str, float]:
-    points = list(equity_curve)
-    if not points:
-        return {"total_return": 0.0, "max_drawdown": 0.0}
-    start = points[0].equity
-    end = points[-1].equity
-    total_return = (end - start) / start if start else 0.0
-    peak = points[0].equity
-    max_drawdown = 0.0
-    for point in points:
-        peak = max(peak, point.equity)
-        drawdown = (peak - point.equity) / peak if peak else 0.0
-        max_drawdown = max(max_drawdown, drawdown)
-    return {"total_return": total_return, "max_drawdown": max_drawdown}

@@ -9,6 +9,7 @@ from modules.data_sources.models import Bar, DataSet
 from modules.strategies.base import Strategy
 
 from .base import IBacktestEngine
+from .metrics import compute_performance
 from .result import BacktestResult, EquityPoint, Trade
 
 
@@ -159,17 +160,15 @@ class VnpyBacktestEngine(IBacktestEngine):
         for trade in engine.trades.values():
             trades.append(Trade(datetime=trade.datetime, price=trade.price, size=trade.volume))
 
-        performance = {
-            "total_return": float(stats.get("total_return", 0.0)),
-            "max_drawdown": float(stats.get("max_drawdown", 0.0)),
-            "sharpe_ratio": float(stats.get("sharpe_ratio", 0.0)),
-        }
+        performance, returns = compute_performance(equity_curve)
+        performance.setdefault("total_return", float(stats.get("total_return", 0.0)))
+        performance.setdefault("max_drawdown", float(stats.get("max_drawdown", 0.0)))
         if not equity_curve:
-            performance.setdefault("total_return", 0.0)
-            performance.setdefault("max_drawdown", 0.0)
+            performance.setdefault("sharpe_ratio", float(stats.get("sharpe_ratio", 0.0)))
 
         return BacktestResult(
             equity_curve=tuple(equity_curve),
             trades=tuple(trades),
             performance_metrics=performance,
+            daily_returns=returns,
         )

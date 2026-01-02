@@ -1,13 +1,14 @@
 # 报告与 UI 模块（reporting_ui）
 
 ## 已完成
-- 构建基础报告函数 `build_report`：生成权益曲线图（有 matplotlib 备用文本导出）并输出基础指标文本文件。
+- 构建报告函数 `build_report`：生成权益曲线图（matplotlib 优先，缺省回落 CSV）并输出指标文本文件。
+- 批量报告 `build_experiment_reports`：生成多策略权益叠加图、指标表 CSV、显著性检验结果文件，并回填到策略级报告。
 - 新增 `__main__` 入口，支持 `python -m modules.reporting_ui` 查看用法提示。
 
 ## 必须完成但未完成
-- 报表指标汇总（收益、回撤、夏普等）与表格输出。
-- 多策略对比图（叠加/分组）与交互式图表选项。
-- 与 ExperimentRunner 的统一报告入口与目录管理。
+- 交互式图表（plotly/bokeh）与网页化报告导出。
+- 更丰富的表格排版（Markdown/HTML）与指标高亮规则。
+- 与 ExperimentRunner 的统一目录版本化与配置注入。
 
 ## 可选项
 - Web UI 或 vn.py UI 的集成入口。
