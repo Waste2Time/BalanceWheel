@@ -25,7 +25,7 @@ class BaostockProvider(DataProvider):
                 start_date=request.start,
                 end_date=request.end,
                 frequency="d",
-                adjustflag="3",
+                adjustflag=request.adjust or "3",
             )
 
             rows = []

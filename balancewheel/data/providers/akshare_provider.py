@@ -18,14 +18,14 @@ class AkshareProvider(DataProvider):
                 symbol=request.symbol,
                 start_date=request.start,
                 end_date=request.end,
-                adjust="",
+                adjust=request.adjust,
             )
         elif request.asset_type == "etf":
             data = ak.fund_etf_hist_em(
                 symbol=request.symbol,
                 start_date=request.start,
                 end_date=request.end,
-                adjust="",
+                adjust=request.adjust,
             )
         elif request.asset_type == "index":
             data = ak.index_zh_a_hist(

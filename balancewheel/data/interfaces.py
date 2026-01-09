@@ -17,6 +17,7 @@ class DataRequest:
     asset_type: AssetType
     start: str
     end: str
+    adjust: str = ""
 
 
 class DataProvider(ABC):

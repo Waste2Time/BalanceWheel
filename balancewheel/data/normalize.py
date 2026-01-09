@@ -41,5 +41,16 @@ def normalize_ohlcv(frame: pd.DataFrame) -> pd.DataFrame:
     data = data[STANDARD_COLUMNS]
     data["datetime"] = pd.to_datetime(data["datetime"])
     numeric_cols = [col for col in STANDARD_COLUMNS if col != "datetime"]
-    data[numeric_cols] = data[numeric_cols].apply(pd.to_numeric, errors="coerce").fillna(0)
+    data[numeric_cols] = data[numeric_cols].apply(pd.to_numeric, errors="coerce")
+    data = apply_missing_strategy(data)
+    return data
+
+
+def apply_missing_strategy(data: pd.DataFrame) -> pd.DataFrame:
+    """Apply fixed missing value strategy."""
+    data = data.copy()
+    price_cols = ["open", "high", "low", "close"]
+    data[price_cols] = data[price_cols].ffill()
+    data[price_cols] = data[price_cols].fillna(0)
+    data[["volume", "amount"]] = data[["volume", "amount"]].fillna(0)
     return data

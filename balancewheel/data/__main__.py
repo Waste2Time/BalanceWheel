@@ -3,6 +3,7 @@
 import pandas as pd
 
 from balancewheel.data.normalize import normalize_ohlcv
+from balancewheel.data.validation import validate_ohlcv
 
 
 def main() -> None:
@@ -16,6 +17,7 @@ def main() -> None:
         }
     )
     normalized = normalize_ohlcv(sample)
+    validate_ohlcv(normalized)
     print(normalized.dtypes)
 
 
