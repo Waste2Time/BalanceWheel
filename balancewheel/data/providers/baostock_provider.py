@@ -20,11 +20,13 @@ class BaostockProvider(DataProvider):
         try:
             fields = "date,open,high,low,close,volume,amount"
             symbol = format_baostock_symbol(request.symbol, request.asset_type)
+            start_date = format_baostock_date(request.start)
+            end_date = format_baostock_date(request.end)
             result = bs.query_history_k_data_plus(
                 symbol,
                 fields,
-                start_date=request.start,
-                end_date=request.end,
+                start_date=start_date,
+                end_date=end_date,
                 frequency="d",
                 adjustflag=request.adjust or "3",
             )
@@ -56,3 +58,12 @@ def format_baostock_symbol(symbol: str, asset_type: str) -> str:
     if symbol.startswith(("510", "511", "512", "513", "515", "516", "518", "588", "159", "160")):
         return f"sh.{symbol}"
     return f"sz.{symbol}"
+
+
+def format_baostock_date(value: str) -> str:
+    """Format date string to YYYY-MM-DD for baostock."""
+    if "-" in value:
+        return value
+    if len(value) != 8 or not value.isdigit():
+        raise ValueError(f"Invalid date format: {value}")
+    return f"{value[:4]}-{value[4:6]}-{value[6:]}"
