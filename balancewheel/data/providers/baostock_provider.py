@@ -22,13 +22,14 @@ class BaostockProvider(DataProvider):
             symbol = format_baostock_symbol(request.symbol, request.asset_type)
             start_date = format_baostock_date(request.start)
             end_date = format_baostock_date(request.end)
+            adjustflag = map_adjust_for_baostock(request.adjust)
             result = bs.query_history_k_data_plus(
                 symbol,
                 fields,
                 start_date=start_date,
                 end_date=end_date,
                 frequency="d",
-                adjustflag=request.adjust or "3",
+                adjustflag=adjustflag,
             )
 
             rows = []
@@ -67,3 +68,10 @@ def format_baostock_date(value: str) -> str:
     if len(value) != 8 or not value.isdigit():
         raise ValueError(f"Invalid date format: {value}")
     return f"{value[:4]}-{value[4:6]}-{value[6:]}"
+
+
+def map_adjust_for_baostock(adjust: str) -> str:
+    mapping = {"none": "3", "qfq": "2", "hfq": "1"}
+    if adjust not in mapping:
+        raise ValueError(f"Unsupported adjust value: {adjust}")
+    return mapping[adjust]

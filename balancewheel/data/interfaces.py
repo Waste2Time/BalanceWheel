@@ -9,6 +9,7 @@ from typing import Literal
 import pandas as pd
 
 AssetType = Literal["stock", "etf", "index"]
+AdjustType = Literal["none", "qfq", "hfq"]
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,7 @@ class DataRequest:
     asset_type: AssetType
     start: str
     end: str
-    adjust: str = ""
+    adjust: AdjustType = "none"
 
 
 class DataProvider(ABC):

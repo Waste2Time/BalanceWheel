@@ -8,6 +8,7 @@ import pandas as pd
 
 from balancewheel.data.interfaces import DataProvider, DataRequest
 from balancewheel.data.normalize import normalize_ohlcv
+from balancewheel.data.providers.akshare_provider import AkshareEtfSinaProvider
 from balancewheel.data.repository import CsvRepository, build_meta
 from balancewheel.data.validation import validate_ohlcv
 
@@ -41,10 +42,25 @@ class DataService:
         self, request: DataRequest, primary_provider: str
     ) -> pd.DataFrame:
         datasets: dict[str, pd.DataFrame] = {}
-        for name, provider in self.providers.items():
+        providers = dict(self.providers)
+
+        if request.asset_type == "etf":
+            providers.pop("baostock", None)
+            providers["akshare_sina"] = AkshareEtfSinaProvider()
+
+        if primary_provider not in providers:
+            raise ValueError(f"Primary provider not available for asset type: {primary_provider}")
+
+        for name, provider in providers.items():
             raw = provider.fetch_daily_ohlcv(request)
             normalized = normalize_ohlcv(raw)
             normalized = normalized.sort_values("datetime").reset_index(drop=True)
+            if request.asset_type == "etf" and name == "akshare_sina":
+                start = pd.to_datetime(request.start)
+                end = pd.to_datetime(request.end)
+                normalized = normalized[
+                    (normalized["datetime"] >= start) & (normalized["datetime"] <= end)
+                ].reset_index(drop=True)
             validate_ohlcv(normalized)
             datasets[name] = normalized
 

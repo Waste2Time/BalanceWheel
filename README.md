@@ -17,6 +17,7 @@ BalanceWheel 是一个面向个人使用、低成本、可迭代的量化策略�
 - 统一 Schema：`datetime, open, high, low, close, volume, amount`。
 - 数据落地保存为 CSV。
 - 数据校验与多源交叉验证，并记录元信息到 `data/_meta`。
+- 统一复权参数：`none`（不复权）、`qfq`（前复权）、`hfq`（后复权）。
 
 ## 本地检查
 
