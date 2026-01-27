@@ -22,6 +22,14 @@ COLUMN_ALIASES = {
     "成交量": "volume",
     "amount": "amount",
     "成交额": "amount",
+    "amplitude": "amplitude",
+    "振幅": "amplitude",
+    "change_pct": "change_pct",
+    "涨跌幅": "change_pct",
+    "change": "change",
+    "涨跌额": "change",
+    "turnover": "turnover",
+    "换手率": "turnover",
 }
 
 
@@ -52,5 +60,7 @@ def apply_missing_strategy(data: pd.DataFrame) -> pd.DataFrame:
     price_cols = ["open", "high", "low", "close"]
     data[price_cols] = data[price_cols].ffill()
     data[price_cols] = data[price_cols].fillna(0)
-    data[["volume", "amount"]] = data[["volume", "amount"]].fillna(0)
+    data[["volume", "amount", "amplitude", "change_pct", "change", "turnover"]] = (
+        data[["volume", "amount", "amplitude", "change_pct", "change", "turnover"]].fillna(0)
+    )
     return data

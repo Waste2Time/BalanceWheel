@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Mapping
 
 import pandas as pd
+import numpy as np
 
 from balancewheel.data.interfaces import DataProvider, DataRequest
 from balancewheel.data.normalize import normalize_ohlcv
@@ -25,7 +26,11 @@ class DataService:
             raise ValueError(f"Unknown provider: {provider_name}")
 
         normalized = self._fetch_with_cross_validation(request, provider_name)
-        path = self.repository.save(request.symbol, request.asset_type, normalized)
+        data_to_save = normalized
+        if provider_name in {"akshare", "akshare_sina"}:
+            data_to_save = normalized.copy()
+            data_to_save["volume"] = data_to_save["volume"] * 100
+        path = self.repository.save(request.symbol, request.asset_type, data_to_save)
         meta = build_meta(
             symbol=request.symbol,
             path=path,
@@ -33,7 +38,7 @@ class DataService:
             adjust=request.adjust,
             start=request.start,
             end=request.end,
-            data=normalized,
+            data=data_to_save,
         )
         self.repository.write_meta(record=meta, batch=meta)
         return normalized
@@ -65,9 +70,70 @@ class DataService:
             datasets[name] = normalized
 
         primary = datasets[primary_provider]
+        mismatches: list[str] = []
+        compare_columns = ["datetime", "open", "high", "low", "close", "volume"]
+
+        def prepare_for_compare(provider_name: str, data: pd.DataFrame) -> pd.DataFrame:
+            subset = data[compare_columns].copy()
+            if provider_name == "akshare_sina":
+                subset["volume"] = subset["volume"] / 100
+                subset["volume"] = np.floor(subset["volume"] + 0.5)
+            if request.asset_type == "stock" and provider_name == "baostock":
+                subset["volume"] = subset["volume"] / 100
+                subset["volume"] = np.floor(subset["volume"] + 0.5)
+            return subset
+
+        primary_compare = prepare_for_compare(primary_provider, primary)
         for name, dataset in datasets.items():
             if name == primary_provider:
                 continue
-            if not primary.equals(dataset):
-                raise ValueError(f"Data mismatch between {primary_provider} and {name}")
+
+            other_compare = prepare_for_compare(name, dataset)
+            primary_len = len(primary_compare)
+            other_len = len(other_compare)
+            min_len = min(primary_len, other_len)
+            if primary_len != other_len:
+                mismatches.append(
+                    f"Length mismatch between {primary_provider} ({primary_len}) and {name} ({other_len})"
+                )
+
+            for idx in range(min_len):
+                primary_row = primary_compare.iloc[idx]
+                other_row = other_compare.iloc[idx]
+                diff_cols = []
+                for column in compare_columns:
+                    primary_value = primary_row[column]
+                    other_value = other_row[column]
+                    if pd.isna(primary_value) and pd.isna(other_value):
+                        continue
+                    if primary_value != other_value:
+                        diff_cols.append(
+                            f"{column}: {primary_value} != {other_value}"
+                        )
+                if diff_cols:
+                    row_number = idx + 1
+                    date_value = primary_row["datetime"]
+                    mismatches.append(
+                        f"Row {row_number} ({date_value}): {name} mismatch -> {', '.join(diff_cols)}"
+                    )
+
+            if other_len > min_len:
+                for idx in range(min_len, other_len):
+                    row_number = idx + 1
+                    date_value = other_compare.iloc[idx]["datetime"]
+                    mismatches.append(
+                        f"Row {row_number} ({date_value}): {primary_provider} missing row"
+                    )
+            elif primary_len > min_len:
+                for idx in range(min_len, primary_len):
+                    row_number = idx + 1
+                    date_value = primary_compare.iloc[idx]["datetime"]
+                    mismatches.append(
+                        f"Row {row_number} ({date_value}): {name} missing row"
+                    )
+
+        if mismatches:
+            detail = "\n".join(mismatches)
+            raise ValueError(f"Data mismatch detected:\n{detail}")
+
         return primary

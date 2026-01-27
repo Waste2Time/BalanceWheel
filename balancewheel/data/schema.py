@@ -8,4 +8,8 @@ STANDARD_COLUMNS = [
     "close",
     "volume",
     "amount",
+    "amplitude",
+    "change_pct",
+    "change",
+    "turnover",
 ]

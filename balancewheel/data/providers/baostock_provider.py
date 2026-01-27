@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from balancewheel.data.interfaces import DataProvider, DataRequest
+from balancewheel.data.utils import format_symbol_for_baostock
 
 
 class BaostockProvider(DataProvider):
@@ -52,13 +53,7 @@ def format_baostock_symbol(symbol: str, asset_type: str) -> str:
             return f"sz.{symbol}"
         return f"sh.{symbol}"
 
-    if symbol.startswith(("600", "601", "603", "605", "688", "689")):
-        return f"sh.{symbol}"
-    if symbol.startswith(("000", "001", "002", "003", "300", "301")):
-        return f"sz.{symbol}"
-    if symbol.startswith(("510", "511", "512", "513", "515", "516", "518", "588", "159", "160")):
-        return f"sh.{symbol}"
-    return f"sz.{symbol}"
+    return format_symbol_for_baostock(symbol)
 
 
 def format_baostock_date(value: str) -> str:

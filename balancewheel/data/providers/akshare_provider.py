@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from balancewheel.data.interfaces import DataProvider, DataRequest
+from balancewheel.data.utils import format_symbol_for_sina
 
 
 class AkshareProvider(DataProvider):
@@ -49,8 +50,19 @@ class AkshareEtfSinaProvider(DataProvider):
         if request.asset_type != "etf":
             raise ValueError("AkshareEtfSinaProvider only supports ETF data")
 
-        data = ak.fund_etf_hist_sina(symbol=request.symbol)
-        return data.copy()
+        symbol = format_symbol_for_sina(request.symbol)
+        data = ak.fund_etf_hist_sina(symbol=symbol)
+        data = data.copy()
+        start = pd.to_datetime(request.start)
+        end = pd.to_datetime(request.end)
+        if "日期" in data.columns:
+            dates = pd.to_datetime(data["日期"])
+        elif "date" in data.columns:
+            dates = pd.to_datetime(data["date"])
+        else:
+            dates = pd.to_datetime(data.iloc[:, 0])
+        data = data[(dates >= start) & (dates <= end)].reset_index(drop=True)
+        return data
 
 
 def map_adjust_for_akshare(adjust: str) -> str:
