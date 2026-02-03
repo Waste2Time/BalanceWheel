@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-01-25T16:22:57.330596",
+  "symbol": "000001",
+  "path": "data\\stock_000001.csv",
+  "source": "akshare",
+  "adjust": "none",
+  "start": "20250126",
+  "end": "20260126",
+  "rows": 241,
+  "last_date": "2026-01-23T00:00:00",
+  "fingerprint": "d75e1a4014b19c6eb0ad78c03e7b15a1081060b8195dc7bced83e6bd6cbe5835"
+}
